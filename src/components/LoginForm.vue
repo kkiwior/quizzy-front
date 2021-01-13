@@ -93,7 +93,7 @@ import axios from 'axios';
                 this.$store.commit('token', response.data.access_token);   
             })
             .catch(errors => {
-                if(errors.response === undefined) return this.$store.commit('error', 'Network Error.');
+                //if(errors.response === undefined) return this.$store.commit('error', 'Network Error.');
                 if(errors.response.status != 422) return this.$store.commit('error', errors.response.statusText);
                 Object.keys(errors.response.data).forEach(key => {
                     this.form[key].error = errors.response.data[key][0];

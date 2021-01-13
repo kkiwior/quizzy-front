@@ -47,7 +47,12 @@ export default {
   data: () => ({
     //
   }),
-  mounted(){
+  watch: {
+    '$store.state.Token': function() {
+      axios.defaults.headers.common['Authorization'] = 'Bearer ' + this.$store.getters.Token
+    }
+  },
+  beforeCreate(){
     if(this.$store.getters.Token){
       axios.defaults.headers.common['Authorization'] = 'Bearer ' + this.$store.getters.Token;
       axios.get('user/me')

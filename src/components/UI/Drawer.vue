@@ -84,7 +84,7 @@ import axios from 'axios'
           { title: 'Quizzy', icon: 'mdi-view-dashboard', route: '/' },
           { title: 'Zaloguj się', icon: 'mdi-login', route: '/login', logged: false },
           { title: 'Zarejestruj się', icon: 'mdi-account-plus', route: '/register', logged: false },
-          { title: 'Stwórz quiz', icon: 'mdi-beaker-plus', route: '/create', logged: true }
+          { title: 'Moje quizy', icon: 'mdi-view-list-outline', route: '/quizzes/my', logged: true }
         ],
       }
     },

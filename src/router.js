@@ -5,6 +5,7 @@ import RegisterForm from './components/RegisterForm'
 import LoginForm from './components/LoginForm'
 import CreateQuizForm from './components/CreateQuizForm'
 import QuizView from './components/QuizView'
+import MyQuizzesView from './components/MyQuizzesView'
 
 Vue.use(Router)
 
@@ -35,6 +36,11 @@ export default new Router({
           path: '/quiz/:id',
           name: 'Quiz',
           component: QuizView
+      },
+      {
+          path: '/quizzes/my',
+          name: 'My Quizzes',
+          component: MyQuizzesView
       }
     ]
   })
