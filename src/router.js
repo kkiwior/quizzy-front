@@ -1,11 +1,14 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import Hello from './components/HelloWorld'
+import Quizzes from './components/Views/Quizzes'
+import MyQuizzesView from './components/Views/MyQuizzes'
+import QuizView from './components/Views/Quiz'
+
+
 import RegisterForm from './components/RegisterForm'
 import LoginForm from './components/LoginForm'
 import CreateQuizForm from './components/CreateQuizForm'
-import QuizView from './components/QuizView'
-import MyQuizzesView from './components/MyQuizzesView'
+import NotFoundView from './components/Views/NotFound'
 
 Vue.use(Router)
 
@@ -14,8 +17,8 @@ export default new Router({
     routes: [
       {
         path: '/',
-        name: 'Hello',
-        component: Hello
+        name: 'Quizzes',
+        component: Quizzes
       },
       {
           path: '/register',
@@ -33,6 +36,11 @@ export default new Router({
           component: CreateQuizForm
       },
       {
+        path: '/quiz/:id/edit',
+        name: 'Edit Quiz',
+        component: CreateQuizForm
+      },
+      {
           path: '/quiz/:id',
           name: 'Quiz',
           component: QuizView
@@ -41,6 +49,10 @@ export default new Router({
           path: '/quizzes/my',
           name: 'My Quizzes',
           component: MyQuizzesView
+      },
+      {
+          path: '*',
+          component: NotFoundView
       }
     ]
   })

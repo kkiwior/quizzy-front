@@ -1,13 +1,10 @@
 <template>
-<v-container>
-<v-form  v-if="$store.getters.isLogged && url === ''"
-                class="form"
-                ref="form"
+    <v-container fluid fill-height id="router"><v-row><v-col cols="12" md="10" offset-md="1" lg="10" offset-lg="1" xl="6" offset-xl="3">
+        <v-form  v-if="$store.getters.isLogged && url === ''"
                 v-model="valid"
                 @submit.prevent="submitForm"
             >
-    <v-container fluid fill-height><v-row><v-col cols="12" md="10" offset-md="1" lg="10" offset-lg="1" xl="6" offset-xl="3">
-        <v-card dark>
+        <v-card class="pa-4 d-flex flex-column" dark>
             
             <v-card-text>
                 <v-text-field
@@ -21,13 +18,21 @@
                 <v-card class="d-flex flex-wrap flex-row mt-2" flat>
                     <v-card flat>
                         Ustawienia:
-                        <v-switch v-model="options.shuffle" label="Losowa kolejność pytań i odpowiedzi." hide-details></v-switch>
+                        <v-switch v-model="options.shuffle" label="Losowa kolejność pytań." hide-details></v-switch>
                         <v-switch v-model="options.public" label="Quiz dostępny tylko dla osób z linkiem." hide-details></v-switch>
-                        <v-switch v-model="options.anonymous" label="Dostęp dla tylko dla zalogowanych użytkowników." hide-details></v-switch>
-                        <v-switch v-model="options.reentry" label="Pozwalaj na ponowne rozwiązanie quizu." hide-details></v-switch>
+                        <v-switch v-model="options.anonymous" label="Dostęp dla tylko dla zalogowanych użytkowników." hide-details :disabled="options.reentry"></v-switch>
+                        <v-switch v-model="options.reentry" label="Pozwalaj tylko na jedno rozwiązanie quizu." hide-details></v-switch>
                     </v-card>
                     <v-card class="align-self-center ml-auto mr-auto mr-lg-0 grow-1 text-center" flat>
-                        <v-img class="mt-2 thumbnailQuiz" lazy-src="https://picsum.photos/id/11/10/6" height="128" width="256" src="https://picsum.photos/id/11/500/300" eager></v-img>
+                    <v-hover v-slot="{ hover }">
+                        <v-img class="mt-2 thumbnailQuiz" height="128" width="256" :src="(thumbnail === '' || thumbnail === null ? '/images/quizthumbnail.jpg' : thumbnail)" eager>
+                        <v-expand-transition>
+                        <div v-if="hover" class="d-flex justify-center" style="height: 100%; cursor: pointer" @click="prepareUpload">
+                            <v-icon>mdi-camera</v-icon>
+                        </div>
+                        </v-expand-transition>
+                        </v-img>
+                    </v-hover>
                         <v-card flat>
                             <v-card-text class="text-center">
                                 <v-text-field style="width: 220px;" @click:append-outer="options.time+=5" @click:prepend="options.time = (options.time >= 5 ? options.time - 5 : 0)" append-outer-icon="mdi-plus" prepend-icon="mdi-minus" label="Czas na pytanie" v-model="options.time" hide-details :rules="[v => v !== '' || '']" @keypress="numberInput" @change="options.time = (options.time !== '') ? parseInt(options.time) : 0"/>
@@ -97,25 +102,26 @@
                 type="submit"
                 class="mr-4"
                 >
-                Dodaj quiz
+                {{this.editId ? 'Edytuj quiz' : 'Dodaj quiz'}}
                 </v-btn>
             </v-col>
         
+    </v-form>
 
-    </v-col></v-row></v-container></v-form>
 
     <v-dialog v-if="url !== ''"
         transition="dialog-bottom-transition"
         max-width="600"
         v-model="url"
         dark
+        @click:outside="$router.push('/quizzes/my')"
       >
         <template>
           <v-card>
             <v-toolbar
               color="primary"
               dark
-            >Quiz został dodany!</v-toolbar>
+                >Quiz został {{this.editId ? 'edytowany' : 'dodany'}}!</v-toolbar>
             <v-card-text>
               <div class="mt-4">Link:</div>
               <v-text-field readonly v-model="fullUrl" append-outer-icon="mdi-content-copy" @click:append-outer="copyUrl"></v-text-field>
@@ -126,8 +132,8 @@
           </v-card>
         </template>
       </v-dialog>
-
-    </v-container>
+      
+    </v-col></v-row></v-container>
 </template>
 
 <style lang="stylus">
@@ -163,15 +169,58 @@ import draggable from 'vuedraggable'
     components: {
         draggable
     },
+    props: ['id'],
     data: () => ({
         valid: false,
         name: "",
+        thumbnail: "",
         options: { shuffle: false, public: false, anonymous: false, reentry: false, time: parseInt(0) },
         questions: new Array({ text: "", answers: [{text: "", correct: false}], valid: true}),
         m_index: { question: -1, answer: -1 },
         url: ''
     }),
-
+    created(){
+        if(!this.editId) return false;
+        this.$store.commit('progressbar', true);
+        axios.get("quiz/" + this.editId + '?edit=true')
+            .then(response => {
+                let q = response.data.quiz;
+                this.name = q.name;
+                this.options = { shuffle: q.shuffle, public: q.public, anonymous: q.anonymous, reentry: q.reentry, time: parseInt(q.time) };
+                q.questions.forEach(e =>{
+                    e.answers = JSON.parse(e.answers);
+                    e.text = e.question;
+                    delete e.question;
+                    e.valid = true;
+                });
+                this.questions = q.questions;
+                this.thumbnail = q.thumbnail;
+            })
+            .catch(errors => {
+                if(errors.response === undefined) return this.$store.commit('error', 'Network Error.');
+                    switch(errors.response.status){
+                        case 500:
+                            this.$store.commit('error', 'Błąd serwera.');
+                            break;
+                        case 422:
+                            Object.keys(errors.response.data).forEach(key => {this.form[key].error = errors.response.data[key]});
+                            break;
+                        case 400:
+                            this.$store.commit('error', 'Wystąpił problem w żądaniu.');
+                            break;
+                        case 401:
+                            this.$store.commit('error', 'Brak dostępu.');
+                            break;
+                        case 404:
+                            this.$router.push('/NotFound');
+                            break;
+                        default: 
+                            this.$store.commit('error', 'Wystąpił nieznany błąd.');
+                            break;
+                    }
+            });
+        this.$store.commit('progressbar', false);
+    },
     watch: {
         questions: {
             deep: true,
@@ -182,12 +231,15 @@ import draggable from 'vuedraggable'
 
                 return true;
             }
+        },
+        'options.reentry': function (val){
+            if(val == true) this.options.anonymous = true;
         }
     },
     computed: {
-        fullUrl(){ return process.env.VUE_APP_URL + this.url}
+        fullUrl(){ return process.env.VUE_APP_URL + this.url },
+        editId(){ return (this.$route.params?.id === undefined ? false : this.$route.params?.id) }
     },
-
     methods: {
       async submitForm () {
         let wrong = new Array();
@@ -209,21 +261,68 @@ import draggable from 'vuedraggable'
             return {...q, answers: q.answers.filter(a => a.text)}
         });
 
-        questionsRequest.forEach(q => delete q.valid);
+        questionsRequest.forEach(q => {
+            delete q.valid
+            delete q.order;   
+        });
 
-        let request = { name: this.name, shuffle: this.options.shuffle, public: this.options.public, anonymous: this.options.anonymous, reentry: this.options.reentry, time: this.options.time,
+        let request = { name: this.name, thumbnail: this.thumbnail, shuffle: this.options.shuffle, public: this.options.public, anonymous: this.options.anonymous, reentry: this.options.reentry, time: this.options.time,
                         questions: questionsRequest };
         this.$store.commit('progressbar', true);
-        await axios.post("quiz/create", request)
+        if(!this.editId) await axios.post("quiz/create", request)
             .then(response => {
                 this.url = '/quiz/' + response.data.quiz_id;
             })
             .catch(errors => {
                 if(errors.response === undefined) return this.$store.commit('error', 'Network Error.');
-                if(errors.response.status != 422) return this.$store.commit('error', errors.response.statusText);
-                Object.keys(errors.response.data).forEach(key => {
-                    this.form[key].error = errors.response.data[key][0];
-                });
+                    switch(errors.response.status){
+                        case 500:
+                            this.$store.commit('error', 'Błąd serwera.');
+                            break;
+                        case 422:
+                            this.$store.commit('error', errors.response.data)
+                            break;
+                        case 400:
+                            this.$store.commit('error', 'Wystąpił problem w żądaniu.');
+                            break;
+                        case 401:
+                            this.$store.commit('error', 'Brak dostępu.');
+                            break;
+                        case 404:
+                            this.$router.push('/NotFound');
+                            break;
+                        default: 
+                            this.$store.commit('error', 'Wystąpił nieznany błąd.');
+                            break;
+                    }
+            });
+        else await axios.put("quiz/" + this.editId, request)
+            .then(response => {
+                this.url = '/quiz/' + response.data.quiz_id;
+            })
+            .catch(errors => {
+                if(errors.response === undefined) return this.$store.commit('error', 'Network Error.');
+                    switch(errors.response.status){
+                        case 500:
+                            this.$store.commit('error', 'Błąd serwera.');
+                            break;
+                        case 422:
+                            Object.keys(errors.response.data).forEach(key => {this.form[key].error = errors.response.data[key]});
+                            break;
+                        case 400:
+                            this.$store.commit('error', 'Wystąpił problem w żądaniu.');
+                            break;
+                        case 401:
+                            this.$store.commit('error', 'Brak dostępu.');
+                            break;
+                        case 404:
+                            this.$router.push('/NotFound');
+                            break;
+                        default: 
+                            this.$store.commit('error', 'Wystąpił nieznany błąd.');
+                            break;
+                    }
+
             });
         this.$store.commit('progressbar', false);
       },
@@ -233,6 +332,22 @@ import draggable from 'vuedraggable'
       },
       copyUrl(){
           window.navigator.clipboard.writeText(this.fullUrl);
+      },
+      prepareUpload(){
+        let input = document.createElement('input');
+        input.type = 'file';
+        input.accept ='image/*';
+        input.onchange = () => this.uploadThumbnail(input.files[0]);
+        input.click();
+      },
+      uploadThumbnail: function(img){
+        let formData = new FormData();
+        formData.append("image", img);
+        axios.post('quiz/thumbnail', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }).then(res => this.thumbnail = res.data.thumbnail);
       }
     },
   }

@@ -4,21 +4,42 @@
       permanent
       fixed
       width="256"
+      :mini-variant="resolution"
     >
 
     <template v-if="this.$store.getters.isLogged">
-      <v-list-item class="px-2">
-            <div id="uploadButton">
-              <div class="icon"><span class="mdi mdi-camera" @click="prepareUpload"></span></div>
-          </div>
+      <v-list>
+        <v-list-item class="px-2">
+
+          <v-hover v-slot="{ hover }">
           <v-list-item-avatar>
-            <v-img :src="$store.getters.UserData.avatar"></v-img>
+            <v-avatar v-if="$store.getters.UserData.avatar === null" size="40" rounded="circle" class="elevation-3" color="secondary">
+              <div>
+              {{$store.getters.UserData.name[0]}}
+                <v-expand-transition>
+                          <div v-if="hover" class="d-flex justify-center" style="height: 100%; cursor: pointer; width: 100%;" @click="prepareUpload">
+                              <v-icon style="text-align: center;">mdi-camera</v-icon>
+                          </div>
+                </v-expand-transition>
+                </div>
+            </v-avatar>
+            <v-avatar v-else size="40" rounded="circle" class="elevation-3">
+              <v-img :src="$store.getters.UserData.avatar" :alt="$store.getters.UserData.name">
+                <v-expand-transition>
+                          <div v-if="hover" class="d-flex justify-center" style="height: 100%; cursor: pointer; width: 100%;" @click="prepareUpload">
+                              <v-icon style="text-align: center;">mdi-camera</v-icon>
+                          </div>
+                </v-expand-transition>
+              </v-img>
+            </v-avatar>
           </v-list-item-avatar>
+          </v-hover>
 
           <v-list-item-title class="ml-2">{{this.$store.getters.UserData.name}}</v-list-item-title>
         </v-list-item>
 
         <v-divider></v-divider>
+      </v-list>
       </template>
 
       <v-list>
@@ -39,9 +60,12 @@
       </v-list>
 
       <template v-slot:append v-if="this.$store.getters.isLogged">
-        <div class="pa-2" @click="logout">
-          <v-btn block>
+        <div @click="logout">
+          <v-btn block v-if="!resolution">
             Wyloguj się
+          </v-btn>
+          <v-btn block v-else>
+            <v-icon>mdi-logout</v-icon>
           </v-btn>
         </div>
       </template>
@@ -96,6 +120,10 @@ import axios from 'axios'
                 if(i.logged !== undefined && (i.logged == this.$store.getters.isLogged)) return true;
                 return false;
             });
+        },
+        resolution() {
+          if(this.$vuetify.breakpoint.name == 'md' || this.$vuetify.breakpoint.name == 'lg' || this.$vuetify.breakpoint.name == 'xl') return false;
+          return true;
         }
     },
     methods: {
@@ -116,7 +144,8 @@ import axios from 'axios'
           headers: {
             'Content-Type': 'multipart/form-data'
           }
-        }).then(res => this.$store.commit('changeAvatar', res.data.avatar));
+        }).then(res => this.$store.commit('changeAvatar', res.data.avatar))
+          .catch(() => this.$store.commit('error', 'Wystąpił błąd podczas wgrywania obrazka.'))
       }
     }
   }

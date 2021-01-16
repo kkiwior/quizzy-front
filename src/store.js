@@ -1,8 +1,6 @@
 import Vue from 'vue'
-//import { axios } from 'vue/types/umd';
 import Vuex from 'vuex'
 import VueCookies from 'vue-cookies'
-import axios from 'axios'
 
 Vue.use(Vuex)
 Vue.use(VueCookies)
@@ -28,7 +26,6 @@ export const store = new Vuex.Store({
         },
         token(state, token){
             state.Token = token;
-            axios.defaults.headers.common['Authorization'] = 'Bearer ' + this.$store.getters.Token;
             Vue.$cookies.set('token', token)
         },
         changeAvatar(state, avatar){

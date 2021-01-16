@@ -1,19 +1,18 @@
 <template>
     <v-container fluid fill-height><v-row><v-col cols="12" md="10" offset-md="1" lg="10" offset-lg="1" xl="6" offset-xl="3">
-        <v-card v-if="$store.getters.isLogged" dark class="pa-4 d-flex flex-column">
+        <v-card v-if="$store.getters.isLogged && pageCount >= 0" dark class="pa-4 d-flex flex-column">
 
 
   <v-data-table
     :headers="headers"
     :items="quizzes"
     :page.sync="page"
-    items-per-page="10"
+    :items-per-page="10"
     hide-default-footer
     class="elevation-1"
-    @page-count="pageCount = $event"
   >
   <template #item.name="{ item }">
-    <router-link :to="'/quiz/' + item.id">
+    <router-link :to="'/quiz/' + item.id" style="text-decoration: none; color: white;">
       {{ item.name }}
     </router-link>
   </template>
@@ -30,12 +29,9 @@
         <v-spacer></v-spacer>
             <v-btn
               href
-              color="primary"
+              color="success"
               dark
-              class="mb-2"
-              v-bind="attrs"
-              v-on="on"
-              to="/create"
+              :to="'/create'"
             >
               Stwórz quiz
             </v-btn>
@@ -44,24 +40,31 @@
             <v-card-title class="headline">Czy na pewno chcesz usunąć ten quiz?</v-card-title>
             <v-card-actions>
               <v-spacer></v-spacer>
-              <v-btn color="blue darken-1" text @click="closeDelete">Anuluj</v-btn>
-              <v-btn color="blue darken-1" text @click="deleteItemConfirm">OK</v-btn>
+              <v-btn color="white darken-1" text @click="closeDelete">Anuluj</v-btn>
+              <v-btn color="error darken-1" text @click="deleteItemConfirm">OK</v-btn>
               <v-spacer></v-spacer>
             </v-card-actions>
           </v-card>
         </v-dialog>
       </v-toolbar>
     </template>
+    <template v-slot:item.thumbnail="{ item }">
+      <v-img v-if="item.thumbnail === null" style="cursor: pointer;" @click="$router.push('/quiz/' + item.id)" class="mt-2 mb-2 elevation-4" height="64" width="128" src="/images/quizthumbnail.jpg"></v-img>
+      <v-img v-else style="cursor: pointer;" @click="$router.push('/quiz/' + item.id)" class="mt-2 mb-2 elevation-4" height="64" width="128" :src="item.thumbnail"></v-img>
+    </template>
     <template v-slot:item.actions="{ item }">
       <v-icon
         small
         class="mr-2"
+        @click="$router.push('/quiz/'+item.id+'/edit')"
+        color="warning darken-2"
       >
         mdi-pencil
       </v-icon>
       <v-icon
         small
         @click="deleteItem(item)"
+        color="error darken-1"
       >
         mdi-delete
       </v-icon>
@@ -71,15 +74,13 @@
     </template>
   </v-data-table>
 <div class="text-center pt-2">
-      <v-pagination
+      <v-pagination v-if="pageCount > 1"
         v-model="page"
         :length="pageCount"
       ></v-pagination>
     </div>
 
         </v-card>
-
-
     </v-col></v-row></v-container>
 </template>
 
@@ -91,8 +92,13 @@ import axios from 'axios';
       dialogDelete: false,
       headers: [
         {
-          text: 'Nazwa',
+          text: 'Miniatura',
+          sortable: false,
+          value: 'thumbnail',
           align: 'start',
+        },
+        {
+          text: 'Nazwa',
           sortable: false,
           value: 'name',
         },
@@ -106,12 +112,7 @@ import axios from 'axios';
       quizzes: [],
       editedIndex: -1,
       page: 1,
-      editedItem: {
-        name: '',
-      },
-      defaultItem: {
-        name: '',
-      },
+      pageCount: -1
     }),
 
     watch: {
@@ -137,7 +138,26 @@ import axios from 'axios';
             })
             .catch(errors => {
                 if(errors.response === undefined) return this.$store.commit('error', 'Network Error.');
-                if(errors.response.status != 422) return this.$store.commit('error', errors.response.statusText);
+                    switch(errors.response.status){
+                        case 500:
+                            this.$store.commit('error', 'Błąd serwera.');
+                            break;
+                        case 422:
+                            Object.keys(errors.response.data).forEach(key => {this.form[key].error = errors.response.data[key]});
+                            break;
+                        case 400:
+                            this.$store.commit('error', 'Wystąpił problem w żądaniu.');
+                            break;
+                        case 401:
+                            this.$store.commit('error', 'Brak dostępu.');
+                            break;
+                        case 404:
+                            this.$router.push('/NotFound');
+                            break;
+                        default: 
+                            this.$store.commit('error', 'Wystąpił nieznany błąd.');
+                            break;
+                    }
             });
         this.$store.commit('progressbar', false);
       },
@@ -156,7 +176,26 @@ import axios from 'axios';
             })
             .catch(errors => {
                 if(errors.response === undefined) return this.$store.commit('error', 'Network Error.');
-                if(errors.response.status != 422) return this.$store.commit('error', errors.response.statusText);
+                    switch(errors.response.status){
+                        case 500:
+                            this.$store.commit('error', 'Błąd serwera.');
+                            break;
+                        case 422:
+                            Object.keys(errors.response.data).forEach(key => {this.form[key].error = errors.response.data[key]});
+                            break;
+                        case 400:
+                            this.$store.commit('error', 'Wystąpił problem w żądaniu.');
+                            break;
+                        case 401:
+                            this.$store.commit('error', 'Brak dostępu.');
+                            break;
+                        case 404:
+                            this.$router.push('/NotFound');
+                            break;
+                        default: 
+                            this.$store.commit('error', 'Wystąpił nieznany błąd.');
+                            break;
+                    }
             });
         this.$store.commit('progressbar', false);
         this.closeDelete()

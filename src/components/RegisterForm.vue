@@ -107,10 +107,10 @@ import axios from 'axios';
 
     watch: {
         'form.name.value': function (n, o){
-            if(n !== o && this.form.name.error == "Nazwa użytkownika jest zajęta.") this.form.name.error = '';
+            if(n !== o && this.form.name.error.length > 0) this.form.name.error = '';
         },
         'form.email.value': function (n, o){
-            if(n !== o && this.form.email.error == "Email jest zajęty.") this.form.email.error = '';
+            if(n !== o && this.form.email.error.length > 0) this.form.email.error = '';
         }
     },
 
@@ -121,14 +121,28 @@ import axios from 'axios';
         await axios.post("user/register", request)
             .then(response => {
                 this.$store.commit('loginUser', response.data.user)
-                this.$store.commit('token', response.data.access_token);   
+                this.$store.commit('token', response.data.access_token); 
+                this.$router.push('/');  
             })
             .catch(errors => {
                 if(errors.response === undefined) return this.$store.commit('error', 'Network Error.');
-                if(errors.response.status != 422) return this.$store.commit('error', errors.response.statusText);
-                Object.keys(errors.response.data).forEach(key => {
-                    this.form[key].error = errors.response.data[key][0];
-                });
+                switch(errors.response.status){
+                    case 500:
+                        this.$store.commit('error', 'Błąd serwera.');
+                        break;
+                    case 422:
+                        Object.keys(errors.response.data).forEach(key => {this.form[key].error = errors.response.data[key]});
+                        break;
+                    case 400:
+                        this.$store.commit('error', 'Wystąpił problem w żądaniu.');
+                        break;
+                    case 401:
+                        this.$store.commit('error', 'Brak dostępu.');
+                        break;
+                    default: 
+                        this.$store.commit('error', 'Wystąpił nieznany błąd.');
+                        break;
+                }
             });
         this.$store.commit('progressbar', false);
       },

@@ -14,8 +14,11 @@
   background-color #272727
 
 #router
-  width calc(100% - 256px)
+  width calc(100% - 50px)
   float right
+
+  @media screen and (min-width: 960px)
+    width calc(100% - 256px)
 </style>
 
 <style lang="stylus">
