@@ -39,7 +39,7 @@
                 ></v-img>
               </v-card>
               <v-card class="align-self-center ml-4" flat>
-                <v-card class="d-flex flex-column" flat>
+                <v-card class="d-flex flex-column align-center" flat>
                   <v-card class="text-h6" flat>{{ quiz.name }}</v-card>
                   <v-card flat
                     >{{ quiz.questions_count }}
@@ -87,7 +87,7 @@
                 hide-default-footer
                 :headers="ranking.headers"
                 :items="ranking.people"
-                class="elevation-1 mt-4"
+                class="elevation-2 mt-4 secondary darken-2"
               >
                 <template v-slot:no-data>
                   Nikt jeszcze nie rozwiązał tego quizu.
@@ -97,7 +97,7 @@
                     v-if="item.user.avatar === null"
                     size="40"
                     rounded="circle"
-                    class="mr-2 elevation-3"
+                    class="mr-2 mt-2 mb-2 elevation-3"
                     color="secondary"
                     >{{ item.user.name[0] }}</v-avatar
                   >
@@ -105,7 +105,7 @@
                     v-else
                     size="40"
                     rounded="circle"
-                    class="mr-2 elevation-3"
+                    class="mr-2 mt-2 mb-2 elevation-3"
                     ><v-img
                       :src="item.user.avatar"
                       :alt="item.user.name"
@@ -160,7 +160,7 @@
             v-if="quiz.time"
             v-model="timer"
             height="25"
-            class="mt-2 mb-2"
+            class="mt-2 mb-5"
             ><strong>{{
               Math.ceil((timer / 100) * this.quiz.time)
             }}</strong></v-progress-linear
@@ -213,6 +213,7 @@
 .v-btn__content {
   flex: 0 1 auto !important;
   white-space: normal !important;
+  word-break: break-word;
 }
 </style>
 
@@ -226,9 +227,9 @@ export default {
     },
     ranking: {
       headers: [
-        { text: "#", value: "place" },
-        { text: "Użytkownik", value: "user" },
-        { text: "Punktów", value: "score" },
+        { text: "Miejsce", value: "place", class: "primary darken-3" },
+        { text: "Użytkownik", value: "user", class: "primary darken-3" },
+        { text: "Punktów", value: "score", class: "primary darken-3" },
       ],
       people: [{ place: "1.", user: { name: "User", avatar: "" }, score: "0" }],
     },
@@ -341,11 +342,11 @@ export default {
           if (id != 0 && !response.data.correct.includes(id))
             document
               .querySelector("#questions div:nth-child(" + id + ") button")
-              .classList.add("error");
+              .classList.add("error", "darken-1");
           response.data.correct.forEach((c) => {
             document
               .querySelector("#questions div:nth-child(" + c + ") button")
-              .classList.add("success");
+              .classList.add("success", "darken-1");
           });
 
           if (response.data.finish === undefined)

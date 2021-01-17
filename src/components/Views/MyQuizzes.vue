@@ -21,7 +21,7 @@
             :page.sync="page"
             :items-per-page="10"
             hide-default-footer
-            class="elevation-1"
+            class="elevation-2 secondary darken-2"
           >
             <template #item.name="{ item }">
               <router-link
@@ -32,11 +32,11 @@
               </router-link>
             </template>
             <template v-slot:top>
-              <v-toolbar flat>
+              <v-toolbar flat color="primary darken-3">
                 <v-toolbar-title>Twoje quizy</v-toolbar-title>
                 <v-divider class="mx-4" inset vertical></v-divider>
                 <v-spacer></v-spacer>
-                <v-btn href color="success" dark :to="'/create'">
+                <v-btn href color="success darken-2" dark :to="'/create'">
                   Stwórz quiz
                 </v-btn>
                 <v-dialog v-model="dialogDelete" max-width="500px" dark>
@@ -82,17 +82,19 @@
               ></v-img>
             </template>
             <template v-slot:item.actions="{ item }">
-              <v-icon
-                small
-                class="mr-2"
-                @click="$router.push('/quiz/' + item.id + '/edit')"
-                color="warning darken-2"
-              >
-                mdi-pencil
-              </v-icon>
-              <v-icon small @click="deleteItem(item)" color="error darken-1">
-                mdi-delete
-              </v-icon>
+              <div style="min-width: 40px">
+                <v-icon
+                  small
+                  class="mr-2"
+                  @click="$router.push('/quiz/' + item.id + '/edit')"
+                  color="warning darken-2"
+                >
+                  mdi-pencil
+                </v-icon>
+                <v-icon small @click="deleteItem(item)" color="error darken-1">
+                  mdi-delete
+                </v-icon>
+              </div>
             </template>
             <template v-slot:no-data>
               Nie stworzyłeś jeszcze żadnego quizu.

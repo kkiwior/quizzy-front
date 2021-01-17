@@ -4,6 +4,7 @@
     permanent
     fixed
     width="256"
+    color="secondary darken-2"
     :mini-variant="resolution"
   >
     <template v-if="this.$store.getters.isLogged">
@@ -20,6 +21,14 @@
               >
                 <div>
                   {{ $store.getters.UserData.name[0] }}
+                  <template class="d-flex justify-center" v-if="uploading">
+                    <v-progress-circular
+                      indeterminate
+                      color="primary"
+                      style="height: 100%"
+                      size="40"
+                    ></v-progress-circular>
+                  </template>
                   <v-expand-transition>
                     <div
                       v-if="hover"
@@ -37,6 +46,14 @@
                   :src="$store.getters.UserData.avatar"
                   :alt="$store.getters.UserData.name"
                 >
+                  <template class="d-flex justify-center" v-if="uploading">
+                    <v-progress-circular
+                      indeterminate
+                      color="primary"
+                      style="height: 100%"
+                      size="40"
+                    ></v-progress-circular>
+                  </template>
                   <v-expand-transition>
                     <div
                       v-if="hover"
@@ -119,10 +136,12 @@
 
 <script>
 import axios from "axios";
+import MediaCompress from "@/MediaCompress.js";
 
 export default {
   data() {
     return {
+      uploading: false,
       items: [
         { title: "Quizzy", icon: "mdi-view-dashboard", route: "/" },
         {
@@ -182,9 +201,14 @@ export default {
       input.onchange = () => this.uploadAvatar(input.files[0]);
       input.click();
     },
-    uploadAvatar: function (img) {
+    uploadAvatar: async function (img) {
+      this.uploading = true;
+      let compressedImage = await MediaCompress.toWebp(img, {
+        width: 150,
+        height: 150,
+      });
       let formData = new FormData();
-      formData.append("image", img);
+      formData.append("image", compressedImage);
       axios
         .post("user/upload_avatar", formData, {
           headers: {
@@ -198,6 +222,7 @@ export default {
             "Wystąpił błąd podczas wgrywania obrazka."
           )
         );
+      this.uploading = false;
     },
   },
 };

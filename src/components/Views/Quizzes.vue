@@ -4,7 +4,7 @@
       ><v-col cols="12" xl="10" offset-xl="1">
         <v-container>
           <v-row>
-            <v-col cols="12" md="6" class="pb-0">
+            <v-col cols="12" md="6" class="pb-0 pt-0">
               <v-text-field
                 v-model="searchQuery"
                 placeholder="Szukaj"
@@ -64,23 +64,25 @@
               >
                 <v-img
                   v-if="quiz.thumbnail === null"
-                  height="128"
+                  height="150"
                   width="100%"
                   src="/images/quizthumbnail.jpg"
                   eager
-                />
+                >
+                  <div class="fill-height bottom-gradient"></div>
+                </v-img>
                 <v-img
                   v-else
-                  height="128"
+                  height="150"
                   width="100%"
                   :src="quiz.thumbnail"
                   eager
-                />
-                <span
-                  class="align-self-center pa-2"
-                  style="text-align: center"
-                  >{{ quiz.name }}</span
                 >
+                  <div class="fill-height bottom-gradient"></div>
+                </v-img>
+                <span class="align-self-center pl-2 pr-2 quizText">{{
+                  quiz.name
+                }}</span>
               </v-card>
               <div class="text-center pt-2"></div>
             </v-col>
@@ -99,6 +101,25 @@
 <style lang="stylus" scoped>
 .quiz {
   cursor: pointer;
+}
+
+.quizText {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  text-shadow: 1px 1px 3px #000;
+}
+
+.bottom-gradient {
+  background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0) 65%, rgba(0, 0, 0, 0.4) 75%, rgba(0, 0, 0, 0.7) 82%, rgba(0, 0, 0, 0.9) 90%, rgba(0, 0, 0, 1) 100%);
 }
 </style>
 

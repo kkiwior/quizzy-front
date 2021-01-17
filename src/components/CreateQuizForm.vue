@@ -19,13 +19,13 @@
             <v-card-text>
               <v-text-field
                 v-model="name"
-                :counter="128"
+                :counter="255"
                 prepend-icon="mdi-rename-box"
                 label="Nazwa quizu"
                 :rules="[
                   (v) => !!v || 'Nazwa quizu jest wymagana.',
                   (v) => v.length >= 5 || 'Nazwa quizu za krótka.',
-                  (v) => v.length <= 128 || 'Nazwa quizu za długa',
+                  (v) => v.length <= 255 || 'Nazwa quizu za długa',
                 ]"
               ></v-text-field>
 
@@ -70,6 +70,18 @@
                       "
                       eager
                     >
+                      <template
+                        style="width: 100%"
+                        class="d-flex justify-center"
+                        v-if="uploading"
+                      >
+                        <v-progress-circular
+                          indeterminate
+                          color="primary"
+                          style="height: 100%"
+                          size="40"
+                        ></v-progress-circular>
+                      </template>
                       <v-expand-transition>
                         <div
                           v-if="hover"
@@ -86,13 +98,6 @@
                     <v-card-text class="text-center">
                       <v-text-field
                         style="width: 220px"
-                        @click:append-outer="options.time += 5"
-                        @click:prepend="
-                          options.time =
-                            options.time >= 5 ? options.time - 5 : 0
-                        "
-                        append-outer-icon="mdi-plus"
-                        prepend-icon="mdi-minus"
                         label="Czas na udzielenie odpowiedzi"
                         v-model="options.time"
                         hide-details
@@ -102,7 +107,23 @@
                           options.time =
                             options.time !== '' ? parseInt(options.time) : 0
                         "
-                      />
+                      >
+                        <template v-slot:prepend>
+                          <v-icon
+                            tabindex="-1"
+                            @click="
+                              options.time =
+                                options.time >= 5 ? options.time - 5 : 0
+                            "
+                            >mdi-minus</v-icon
+                          >
+                        </template>
+                        <template v-slot:append-outer>
+                          <v-icon tabindex="-1" @click="options.time += 5"
+                            >mdi-plus</v-icon
+                          >
+                        </template>
+                      </v-text-field>
                     </v-card-text>
                   </v-card>
                 </v-card>
@@ -113,6 +134,7 @@
           <draggable
             v-model="questions"
             group="questions"
+            Delay="400"
             @start="drag = true"
             @end="drag = false"
             handle=".handleQuestion"
@@ -159,7 +181,7 @@
                   :rules="[
                     (v) => v.length >= 3 || 'Pytanie za krótkie.',
                     (v) =>
-                      v.length <= 200 || 'Pytanie za długie. Max. 200 znaków.',
+                      v.length <= 255 || 'Pytanie za długie. Max. 255 znaków.',
                   ]"
                 >
                 </v-text-field>
@@ -170,6 +192,8 @@
                   @start="drag = true"
                   @end="drag = false"
                   handle=".handleAnswers"
+                  delay="150"
+                  delayOnTouchOnly="true"
                 >
                   <v-flex
                     @mouseover="m_index.answer = answerIndex"
@@ -195,13 +219,14 @@
                       "
                       :rules="[
                         (v) =>
-                          v.length <= 100 ||
-                          'Odpowiedź za długa. Max. 100 znaków.',
+                          v.length <= 200 ||
+                          'Odpowiedź za długa. Max. 200 znaków.',
                       ]"
                     >
                       <template v-slot:prepend>
                         <v-icon
                           class="handleAnswers"
+                          tabindex="-1"
                           @click="() => (answer.correct = !answer.correct)"
                           :color="answer.correct ? 'success' : 'error'"
                           >{{
@@ -213,6 +238,7 @@
                       </template>
                       <template v-slot:append-outer>
                         <v-icon
+                          tabindex="-1"
                           v-if="
                             m_index.answer == answerIndex &&
                             m_index.question == questionIndex
@@ -234,7 +260,7 @@
             </v-card>
             <v-col
               ><v-btn
-                class="secondary"
+                color="secondary lighten-1"
                 @click="
                   questions.push({
                     text: '',
@@ -248,7 +274,12 @@
           </draggable>
 
           <v-col class="text-center">
-            <v-btn :disabled="!valid" type="submit" class="mr-4">
+            <v-btn
+              :disabled="!valid"
+              type="submit"
+              class="mr-4"
+              color="secondary darken-1"
+            >
               {{ this.editId ? "Edytuj quiz" : "Dodaj quiz" }}
             </v-btn>
           </v-col>
@@ -264,7 +295,7 @@
         >
           <template>
             <v-card>
-              <v-toolbar color="primary" dark
+              <v-toolbar color="primary darken-2" dark
                 >Quiz został
                 {{ this.editId ? "edytowany" : "dodany" }}!</v-toolbar
               >
@@ -322,6 +353,7 @@ input::-webkit-outer-spin-button, input::-webkit-inner-spin-button {
 <script>
 import axios from "axios";
 import draggable from "vuedraggable";
+import MediaCompress from "@/MediaCompress.js";
 
 export default {
   components: {
@@ -346,6 +378,7 @@ export default {
     }),
     m_index: { question: -1, answer: -1 },
     url: "",
+    uploading: false,
   }),
   created() {
     if (!this.editId) return false;
@@ -540,23 +573,29 @@ export default {
     copyUrl() {
       window.navigator.clipboard.writeText(this.fullUrl);
     },
-    prepareUpload() {
+    prepareUpload: async function () {
       let input = document.createElement("input");
       input.type = "file";
       input.accept = "image/*";
       input.onchange = () => this.uploadThumbnail(input.files[0]);
       input.click();
     },
-    uploadThumbnail: function (img) {
+    uploadThumbnail: async function (img) {
+      this.uploading = true;
+      let compressedImage = await MediaCompress.toWebp(img, {
+        width: 400,
+        height: 200,
+      });
       let formData = new FormData();
-      formData.append("image", img);
-      axios
+      formData.append("image", compressedImage);
+      await axios
         .post("quiz/thumbnail", formData, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
         })
         .then((res) => (this.thumbnail = res.data.thumbnail));
+      this.uploading = false;
     },
   },
 };
