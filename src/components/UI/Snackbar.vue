@@ -24,19 +24,19 @@
 </template>
 
 <script>
-  export default {
-      props: {
-          text: String
+export default {
+  props: {
+    text: String,
+  },
+  computed: {
+    isVisible: {
+      get: function () {
+        return this.text === "" ? false : true;
       },
-      computed: {
-          isVisible: {
-              get: function() {
-                return (this.text === '' ? false : true);
-              },
-              set: function() {
-                  this.$store.commit('errorClose')
-              }
-          }
-      }
-  }
+      set: function () {
+        this.$store.commit("errorClose");
+      },
+    },
+  },
+};
 </script>

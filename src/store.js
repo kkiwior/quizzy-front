@@ -14,30 +14,30 @@ export const store = new Vuex.Store({
         Error: ''
     },
     mutations: {
-        loginUser(state, UserData){
+        loginUser(state, UserData) {
             state.isLogged = true;
             state.UserData = UserData;
         },
-        logoutUser(state){
+        logoutUser(state) {
             state.isLogged = false;
             state.UserData = new Object();
             state.Token = '';
             Vue.$cookies.remove('token');
         },
-        token(state, token){
+        token(state, token) {
             state.Token = token;
             Vue.$cookies.set('token', token)
         },
-        changeAvatar(state, avatar){
+        changeAvatar(state, avatar) {
             state.UserData.avatar = avatar;
         },
-        error(state, method){
+        error(state, method) {
             state.Error = method;
         },
-        errorClose(state){
+        errorClose(state) {
             state.Error = '';
         },
-        progressbar(state, method){
+        progressbar(state, method) {
             state.Progressbar = method;
         }
     },
